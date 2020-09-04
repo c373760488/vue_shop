@@ -16,7 +16,7 @@
           :collapse-transition="false"
           :collapse="isCollapse"
           :router="true"
-          :default-active="activePath">
+          :default-active="$route.path">
           <!--一级菜单-->
           <el-submenu :index="'/'+item.path" v-for="item in menulist" :key="item.id">
             <!--一级菜单的模板区域-->
@@ -74,7 +74,7 @@ export default {
       // console.log(res)
       if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
       this.menulist = res.data
-      console.log(res.data)
+      // console.log(res.data)
     },
     // 点击按钮，切换菜单栏的展开
     toggleCollapse() {
