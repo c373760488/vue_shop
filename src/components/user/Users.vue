@@ -65,7 +65,7 @@
               <el-button type="danger" size="mini" icon="el-icon-delete" @click="removeUserById(scope.row.id)"></el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="dark" content="分配角色" placement="top" :enterable="false">
-              <el-button type="warning" size="mini" icon="el-icon-setting"></el-button>
+              <el-button type="warning" size="mini" icon="el-icon-setting" @click="setRole(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -121,6 +121,29 @@
       <div slot="footer" class="dialog-footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="editUser">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!--    分配角色的对话框-->
+    <el-dialog title="分配角色" :visible.sync="setRoleDialogVisible" width="50%"  :close-on-click-modal="false" @close="setRoleDialogClosed" >
+      <div>
+        <p>当前用户：{{userInfo.username}}</p>
+        <p>当前的角色：{{userInfo.role_name}}</p>
+        <p>分配角色：
+          <el-select v-model="selectRoleId" placeholder="请选择">
+            <el-option
+              v-for="item in rolesList"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.id">
+            </el-option>
+          </el-select>
+        </p>
+
+      </div>
+      <!--   底部区   -->
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="setRoleDialogVisible = false" >取 消</el-button>
+        <el-button type="primary" @click="saveRoleInfo">确 定</el-button>
       </div>
     </el-dialog>
   </div>
@@ -193,7 +216,13 @@ export default {
           { required: true, message: '手机号不能为空', triangle: 'blur' },
           { validator: checkMobile, triangle: 'blur' }
         ]
-      }
+      },
+      // 分配角色对话框显示
+      setRoleDialogVisible: false,
+      userInfo: {},
+      rolesList: {},
+      // 已选中的id角色值
+      selectRoleId: ''
     }
   },
   methods: {
@@ -278,7 +307,7 @@ export default {
     },
     async removeUserById(id) {
       console.log(id)
-      const confirmResult = await this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+      const confirmResult = await this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -295,6 +324,26 @@ export default {
         this.queryInfo.pagenum--
       }
       this.getUserList()
+    },
+    async setRole(userInfo) {
+      this.userInfo = userInfo
+      this.setRoleDialogVisible = true
+      const { data: res } = await this.$http.get('roles')
+      if (res.meta.status !== 200) return this.$message.error('获取权限列表失败')
+      this.rolesList = res.data
+    },
+    async saveRoleInfo() {
+      if (!this.selectRoleId) return this.$message.error('请选择角色')
+      const { data: res } = await this.$http.put(`users/${this.userInfo.id}/role`, { rid: this.selectRoleId })
+      if (res.meta.status !== 200) return this.$message.error('修改角色失败')
+      this.$message.success('更新角色成功')
+      this.getUserList()
+      this.setRoleDialogVisible = false
+    },
+    setRoleDialogClosed() {
+      console.log('销毁')
+      this.selectRoleId = ''
+      this.userInfo = {}
     }
   }
 }
